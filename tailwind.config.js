@@ -1,4 +1,4 @@
-// tailwind.config.js
+@'
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -10,3 +10,4 @@ export default {
   },
   plugins: [],
 }
+'@ | Set-Content -Path tailwind.config.js -Encoding utf8

@@ -1,9 +1,8 @@
 import React from 'react';
-import { Web3Provider } from './context/Web3Context';
 import LandingPage from './components/LandingPage';
 import Header from './components/ui/Header';
 import Dashboard from './components/crisis/Dashboard';
-import { useWeb3 } from './context/Web3Context';
+import { Web3Provider, useWeb3 } from './context/Web3context';
 
 const AppContent = () => {
   const { isConnected, isLoading, error } = useWeb3();

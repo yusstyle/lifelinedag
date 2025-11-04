@@ -1,6 +1,7 @@
-﻿// src/components/crisis/IdentityRegister.jsx
+﻿// src/components/crisis/IdentityRegister.jsx - FIXED & COMPLETE
 import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../../context/Web3Context';
+import { ethers } from 'ethers'; // ADDED MISSING IMPORT
 
 const IdentityRegister = () => {
   const { contract, account, registerIdentity, getIdentity, isIdentityVerified, balance } = useWeb3();
@@ -78,7 +79,7 @@ const IdentityRegister = () => {
 
       setTransactionHash(result.transactionHash);
       
-      setMessage(`✅ Identity registered successfully on BlockDAG! Transaction: ${result.transactionHash.substring(0, 10)}...`);
+      setMessage(`✅ Identity registered successfully on BlockDAG! Transaction: ${result.transactionHash?.substring(0, 10)}...`);
       
       // Reset form
       setFormData({ did: '', sector: '0', metadataURI: '' });
@@ -91,11 +92,11 @@ const IdentityRegister = () => {
       let errorMessage = '❌ Error: ' + (error.reason || error.message);
       
       // User-friendly error messages
-      if (error.message.includes('user rejected transaction')) {
+      if (error.message?.includes('user rejected transaction')) {
         errorMessage = '❌ Transaction rejected by user';
-      } else if (error.message.includes('insufficient funds')) {
-        errorMessage = '❌ Insufficient funds for transaction';
-      } else if (error.message.includes('already registered')) {
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = '❌ Insufficient BDAG funds for transaction';
+      } else if (error.message?.includes('already registered')) {
         errorMessage = '❌ Identity already registered for this wallet';
       }
       
@@ -132,7 +133,7 @@ const IdentityRegister = () => {
           <div>
             <p className="text-blue-300 text-sm font-semibold mb-2">💰 WALLET BALANCE</p>
             <p className="text-green-400 font-semibold text-lg bg-green-500/10 rounded-lg p-3 text-center">
-              {balance ? `${parseFloat(balance).toFixed(4)} ETH` : '0 ETH'}
+              {balance ? `${parseFloat(balance).toFixed(4)} BDAG` : '0 BDAG'}
             </p>
           </div>
           <div>
@@ -161,11 +162,11 @@ const IdentityRegister = () => {
             </div>
             <div>
               <span className="text-green-300">Sector:</span>
-              <p className="text-white">{sectors.find(s => s.value === userIdentity.sector.toString())?.label}</p>
+              <p className="text-white">{sectors.find(s => s.value === userIdentity.sector?.toString())?.label}</p>
             </div>
             <div>
               <span className="text-green-300">Registered:</span>
-              <p className="text-white">{new Date(Number(userIdentity.registrationDate) * 1000).toLocaleDateString()}</p>
+              <p className="text-white">{userIdentity.registrationDate ? new Date(Number(userIdentity.registrationDate) * 1000).toLocaleDateString() : 'Unknown'}</p>
             </div>
             <div>
               <span className="text-green-300">Status:</span>

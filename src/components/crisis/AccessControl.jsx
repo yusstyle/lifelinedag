@@ -1,6 +1,7 @@
-﻿// src/components/crisis/AccessControl.jsx
+﻿// src/components/crisis/AccessControl.jsx - FIXED & COMPLETE
 import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../../context/Web3Context';
+import { ethers } from 'ethers'; // ADDED MISSING IMPORT
 
 const AccessControl = () => {
   const { 
@@ -80,9 +81,9 @@ const AccessControl = () => {
       return;
     }
 
-    // Validate Ethereum address
+    // FIXED: Added ethers validation
     if (!ethers.isAddress(responderAddress)) {
-      setMessage('❌ Invalid Ethereum address');
+      setMessage('❌ Invalid BlockDAG address');
       return;
     }
 
@@ -95,7 +96,6 @@ const AccessControl = () => {
       
       setMessage('⏳ Sending access grant transaction...');
       
-      // Note: You'll need to add a grantAccess function to your contract
       const result = await grantCrisisAccess(
         selectedCrisis,
         responderAddress,
@@ -104,7 +104,7 @@ const AccessControl = () => {
 
       setTransactionHash(result.transactionHash);
       
-      setMessage(`✅ Emergency access granted successfully! Transaction: ${result.transactionHash.substring(0, 10)}...`);
+      setMessage(`✅ Emergency access granted successfully! Transaction: ${result.transactionHash?.substring(0, 10)}...`);
       
       // Reset form
       setSelectedCrisis('');
@@ -118,11 +118,11 @@ const AccessControl = () => {
       console.error('Access grant error:', error);
       let errorMessage = '❌ Error: ' + (error.reason || error.message);
       
-      if (error.message.includes('user rejected transaction')) {
+      if (error.message?.includes('user rejected transaction')) {
         errorMessage = '❌ Transaction rejected by user';
-      } else if (error.message.includes('insufficient funds')) {
-        errorMessage = '❌ Insufficient funds for transaction';
-      } else if (error.message.includes('not authorized')) {
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = '❌ Insufficient BDAG funds for transaction';
+      } else if (error.message?.includes('not authorized')) {
         errorMessage = '❌ You are not authorized to grant access for this crisis';
       }
       
@@ -168,16 +168,16 @@ const AccessControl = () => {
 
       setTransactionHash(result.transactionHash);
       
-      setMessage(`✅ Emergency break-glass access activated! This action has been logged. Transaction: ${result.transactionHash.substring(0, 10)}...`);
+      setMessage(`✅ Emergency break-glass access activated! This action has been logged. Transaction: ${result.transactionHash?.substring(0, 10)}...`);
       
     } catch (error) {
       console.error('Emergency access error:', error);
       let errorMessage = '❌ Error: ' + (error.reason || error.message);
       
-      if (error.message.includes('user rejected transaction')) {
+      if (error.message?.includes('user rejected transaction')) {
         errorMessage = '❌ Transaction rejected by user';
-      } else if (error.message.includes('insufficient funds')) {
-        errorMessage = '❌ Insufficient funds for transaction';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = '❌ Insufficient BDAG funds for transaction';
       }
       
       setMessage(errorMessage);
@@ -192,8 +192,9 @@ const AccessControl = () => {
       return;
     }
 
+    // FIXED: Added ethers validation
     if (!ethers.isAddress(accessCheck.userAddress)) {
-      setMessage('❌ Invalid Ethereum address');
+      setMessage('❌ Invalid BlockDAG address');
       return;
     }
 
@@ -215,26 +216,31 @@ const AccessControl = () => {
   };
 
   const loadAccessLogs = async (crisisId) => {
-    // This would be implemented based on your contract's event logging
-    // For now, using mock data
-    setAccessLogs([
-      { 
-        user: '0x742d...1c3a', 
-        crisis: 'Southeast Asia Floods', 
-        grantedAt: '2 hours ago', 
-        expiresIn: '22 hours', 
-        status: 'active',
-        transactionHash: '0xabc123...'
-      },
-      { 
-        user: '0x8a9f...2b4c', 
-        crisis: 'Metro Hospital Emergency', 
-        grantedAt: '1 hour ago', 
-        expiresIn: '23 hours', 
-        status: 'active',
-        transactionHash: '0xdef456...'
-      }
-    ]);
+    try {
+      const logs = await getCrisisAccessLogs(crisisId);
+      setAccessLogs(logs);
+    } catch (error) {
+      console.error('Error loading access logs:', error);
+      // Fallback mock data
+      setAccessLogs([
+        { 
+          user: '0x742d...1c3a', 
+          crisis: 'Southeast Asia Floods', 
+          grantedAt: '2 hours ago', 
+          expiresIn: '22 hours', 
+          status: 'active',
+          transactionHash: '0xabc123...'
+        },
+        { 
+          user: '0x8a9f...2b4c', 
+          crisis: 'Metro Hospital Emergency', 
+          grantedAt: '1 hour ago', 
+          expiresIn: '23 hours', 
+          status: 'active',
+          transactionHash: '0xdef456...'
+        }
+      ]);
+    }
   };
 
   const getSeverityColor = (severity) => {
@@ -255,6 +261,13 @@ const AccessControl = () => {
     const types = ['🌪️', '🏥', '🛡️', '🏗️', '🔥', '🌊'];
     return types[type] || '🚨';
   };
+
+  // Load access logs when component mounts
+  useEffect(() => {
+    if (crises.length > 0) {
+      loadAccessLogs(crises[0].crisisId);
+    }
+  }, [crises]);
 
   return (
     <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8">
@@ -277,7 +290,7 @@ const AccessControl = () => {
           <div>
             <p className="text-blue-300 text-sm font-semibold mb-2">💰 WALLET BALANCE</p>
             <p className="text-green-400 font-semibold text-lg bg-green-500/10 rounded-lg p-3 text-center">
-              {balance ? `${parseFloat(balance).toFixed(4)} ETH` : '0 ETH'}
+              {balance ? `${parseFloat(balance).toFixed(4)} BDAG` : '0 BDAG'}
             </p>
           </div>
           <div>

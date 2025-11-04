@@ -1,6 +1,7 @@
-﻿// src/components/crisis/CrisisDashboard.jsx
+﻿// src/components/crisis/CrisisDashboard.jsx - FIXED & COMPLETE
 import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../../context/Web3Context';
+import { ethers } from 'ethers'; // ADDED MISSING IMPORT
 
 const CrisisDashboard = () => {
   const { 
@@ -33,10 +34,12 @@ const CrisisDashboard = () => {
   }, [contract]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveCrisis(prev => (prev + 1) % crises.length);
-    }, 5000);
-    return () => clearInterval(interval);
+    if (crises.length > 0) {
+      const interval = setInterval(() => {
+        setActiveCrisis(prev => (prev + 1) % crises.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
   }, [crises.length]);
 
   const loadCrisesFromBlockchain = async () => {
@@ -49,7 +52,7 @@ const CrisisDashboard = () => {
       // Transform blockchain data to UI format
       const transformedCrises = blockchainCrises.map((crisis, index) => ({
         id: index,
-        crisisId: crisis.crisisId.toString(),
+        crisisId: crisis.crisisId?.toString() || index.toString(),
         type: getEmergencyTypeLabel(crisis.emergencyType),
         location: crisis.location,
         status: crisis.verified ? 'active' : 'pending',
@@ -59,8 +62,8 @@ const CrisisDashboard = () => {
         progress: crisis.verified ? Math.floor(Math.random() * 50) + 50 : 0,
         lastUpdate: 'Just now',
         declaredBy: crisis.declaredBy,
-        timestamp: new Date(Number(crisis.timestamp) * 1000).toLocaleDateString(),
-        verificationCount: crisis.verificationCount.toString()
+        timestamp: crisis.timestamp ? new Date(Number(crisis.timestamp) * 1000).toLocaleDateString() : new Date().toLocaleDateString(),
+        verificationCount: crisis.verificationCount?.toString() || '0'
       }));
 
       setCrises(transformedCrises);
@@ -71,42 +74,9 @@ const CrisisDashboard = () => {
     } catch (error) {
       console.error('Error loading crises from blockchain:', error);
       // Fallback to mock data
-      setCrises([
-        { 
-          id: 1, 
-          crisisId: '1',
-          type: '🌪️ Natural Disaster', 
-          location: 'Southeast Asia - Coastal Regions', 
-          status: 'active', 
-          verified: true,
-          severity: 'high',
-          responders: 45,
-          progress: 65,
-          lastUpdate: '2 minutes ago',
-          declaredBy: '0x742d...1c3a',
-          timestamp: '2024-01-15',
-          verificationCount: '3'
-        },
-        { 
-          id: 2, 
-          crisisId: '2',
-          type: '🏥 Medical Emergency', 
-          location: 'Central Hospital - Metro Area', 
-          status: 'active', 
-          verified: true,
-          severity: 'critical',
-          responders: 28,
-          progress: 40,
-          lastUpdate: '5 minutes ago',
-          declaredBy: '0x8a9f...2b4c',
-          timestamp: '2024-01-15',
-          verificationCount: '2'
-        }
-      ]);
-      updateStats([
-        { status: 'active', verified: true },
-        { status: 'active', verified: true }
-      ]);
+      const mockCrises = await getAllCrises();
+      setCrises(mockCrises);
+      updateStats(mockCrises);
     } finally {
       setLoading(false);
     }
@@ -121,7 +91,7 @@ const CrisisDashboard = () => {
     setStats({
       active,
       resolved,
-      totalResponders: crisisData.reduce((sum, c) => sum + c.responders, 0),
+      totalResponders: crisisData.reduce((sum, c) => sum + (c.responders || 0), 0),
       avgResponseTime: '<2s',
       verificationRate: total > 0 ? `${Math.round((verified / total) * 100)}%` : '0%'
     });
@@ -178,7 +148,7 @@ const CrisisDashboard = () => {
 
       setTransactionHash(result.transactionHash);
       
-      setMessage(`✅ Crisis verified successfully! Transaction: ${result.transactionHash.substring(0, 10)}...`);
+      setMessage(`✅ Crisis verified successfully! Transaction: ${result.transactionHash?.substring(0, 10)}...`);
       
       // Reload crises to reflect verification
       setTimeout(() => loadCrisesFromBlockchain(), 2000);
@@ -187,11 +157,11 @@ const CrisisDashboard = () => {
       console.error('Crisis verification error:', error);
       let errorMessage = '❌ Error: ' + (error.reason || error.message);
       
-      if (error.message.includes('user rejected transaction')) {
+      if (error.message?.includes('user rejected transaction')) {
         errorMessage = '❌ Transaction rejected by user';
-      } else if (error.message.includes('insufficient funds')) {
-        errorMessage = '❌ Insufficient funds for transaction';
-      } else if (error.message.includes('already verified')) {
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = '❌ Insufficient BDAG funds for transaction';
+      } else if (error.message?.includes('already verified')) {
         errorMessage = '❌ Crisis already verified';
       }
       
@@ -208,10 +178,6 @@ const CrisisDashboard = () => {
       case 'medium': return 'from-yellow-500 to-orange-500';
       default: return 'from-blue-500 to-cyan-500';
     }
-  };
-
-  const getStatusColor = (status) => {
-    return status === 'active' ? 'text-red-400' : 'text-green-400';
   };
 
   const responseTeams = [
@@ -242,7 +208,7 @@ const CrisisDashboard = () => {
           <div>
             <p className="text-blue-300 text-sm font-semibold mb-2">💰 WALLET BALANCE</p>
             <p className="text-green-400 font-semibold text-lg bg-green-500/10 rounded-lg p-3 text-center">
-              {balance ? `${parseFloat(balance).toFixed(4)} ETH` : '0 ETH'}
+              {balance ? `${parseFloat(balance).toFixed(4)} BDAG` : '0 BDAG'} {/* FIXED: ETH to BDAG */}
             </p>
           </div>
           <div>

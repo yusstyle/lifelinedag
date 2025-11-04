@@ -1,5 +1,6 @@
+// src/components/Header.jsx - CREATE THIS FILE
 import React from 'react';
-import { useWeb3 } from '../../context/Web3Context';
+import { useWeb3 } from '../context/Web3Context';
 
 const Header = () => {
   const { account } = useWeb3();
@@ -39,24 +40,6 @@ const Header = () => {
                   <p className="text-blue-300 text-xs font-mono">{truncateAddress(account)}</p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-white/10">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-green-300">🔒 AES-256 Encryption Active</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-blue-300">🌐 Network Sync: 100%</span>
-              </div>
-            </div>
-            <div className="text-blue-300">
-              Emergency Mode: <span className="text-green-400 font-semibold">Ready</span>
             </div>
           </div>
         </div>
